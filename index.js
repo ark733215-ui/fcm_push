@@ -3,6 +3,8 @@ const admin = require("firebase-admin");
 
 const app = express();
 
+app.use(express.json());
+
 const serviceAccount =
 require("./serviceAccountKey.json");
 
@@ -11,17 +13,57 @@ admin.initializeApp({
     admin.credential.cert(serviceAccount),
 
   databaseURL:
-    "https://rto-1-4b543-default-rtdb.firebaseio.com/"
+    "https://rto-1-4b543-default-rtdb.firebaseio.com"
 });
 
-app.get("/", async (req, res) => {
+app.get("/", (req, res) => {
+
+  res.send("SERVER RUNNING");
+
+});
+
+app.get("/send/:id", async (req, res) => {
 
   try {
 
-    await admin.database().ref("test")
-      .set("hello");
+    const androidID = req.params.id;
 
-    res.send("FIREBASE CONNECTED");
+    console.log("ID:", androidID);
+
+    const snapshot =
+      await admin.database()
+      .ref("FCM/" + androidID)
+      .once("value");
+
+    const token = snapshot.val();
+
+    console.log("TOKEN:", token);
+
+    if (!token) {
+
+      return res.send("TOKEN NOT FOUND");
+    }
+
+    const message = {
+
+      token: token,
+
+      data: {
+        action: "wake"
+      },
+
+      android: {
+        priority: "high"
+      }
+    };
+
+    const response =
+      await admin.messaging()
+      .send(message);
+
+    console.log(response);
+
+    res.send("PUSH SENT");
 
   } catch (e) {
 
@@ -29,10 +71,11 @@ app.get("/", async (req, res) => {
 
     res.send(e.toString());
   }
+
 });
 
-const PORT = process.env.PORT || 3000;
+app.listen(process.env.PORT || 3000, () => {
 
-app.listen(PORT, () => {
   console.log("Server Running");
+
 });
