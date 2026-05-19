@@ -3,22 +3,22 @@ const admin = require("firebase-admin");
 
 const app = express();
 
-const serviceAccount = require("./serviceAccountKey.json");
+const serviceAccount = JSON.parse(
+  process.env.FIREBASE_SERVICE_ACCOUNT
+);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://rto-1-4b543-default-rtdb.firebaseio.com/"
+  databaseURL:
+    "https://rto-1-4b543-default-rtdb.firebaseio.com/"
 });
 
-app.get("/", (req, res) => {
-  res.send("SERVER RUNNING");
-});
-
-app.get("/test", async (req, res) => {
+app.get("/", async (req, res) => {
 
   try {
 
-    await admin.database()
+    await admin
+      .database()
       .ref("test")
       .set("hello");
 
@@ -26,10 +26,8 @@ app.get("/test", async (req, res) => {
 
   } catch (e) {
 
-    res.send("FIREBASE ERROR : " + e);
-
+    res.send(e.toString());
   }
-
 });
 
 const PORT = process.env.PORT || 3000;
