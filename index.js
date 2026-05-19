@@ -3,8 +3,6 @@ const admin = require("firebase-admin");
 
 const app = express();
 
-app.use(express.json());
-
 const serviceAccount =
 require("./serviceAccountKey.json");
 
@@ -17,65 +15,46 @@ admin.initializeApp({
 });
 
 app.get("/", (req, res) => {
-
   res.send("SERVER RUNNING");
-
 });
 
 app.get("/send/:id", async (req, res) => {
 
   try {
 
-    const androidID = req.params.id;
+    const id = req.params.id;
 
-    console.log("ID:", androidID);
+    console.log("STEP 1");
 
-    const snapshot =
-      await admin.database()
-      .ref("FCM/" + androidID)
-      .once("value");
+    const snapshot = await Promise.race([
 
-    const token = snapshot.val();
+      admin.database()
+      .ref("FCM/" + id)
+      .once("value"),
 
-    console.log("TOKEN:", token);
+      new Promise((_, reject) =>
+        setTimeout(() =>
+          reject(new Error("FIREBASE TIMEOUT")), 10000)
+      )
 
-    if (!token) {
+    ]);
 
+    console.log("STEP 2");
+
+    if (!snapshot.exists()) {
       return res.send("TOKEN NOT FOUND");
     }
 
-    const message = {
-
-      token: token,
-
-      data: {
-        action: "wake"
-      },
-
-      android: {
-        priority: "high"
-      }
-    };
-
-    const response =
-      await admin.messaging()
-      .send(message);
-
-    console.log(response);
-
-    res.send("PUSH SENT");
+    return res.send(snapshot.val());
 
   } catch (e) {
 
-    console.log(e);
+    console.log("ERROR:", e);
 
-    res.send(e.toString());
+    return res.send(e.toString());
   }
-
 });
 
 app.listen(process.env.PORT || 3000, () => {
-
   console.log("Server Running");
-
 });
