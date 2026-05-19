@@ -7,7 +7,7 @@ const serviceAccount = require("./serviceAccountKey.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://rto-1-4b543-default-rtdb.firebaseio.com"
+  databaseURL: "https://rto-1-4b543-default-rtdb.firebaseio.com/"
 });
 
 app.get("/", (req, res) => {
@@ -18,13 +18,15 @@ app.get("/test", async (req, res) => {
 
   try {
 
-    await admin.database().ref("test").set("hello");
+    await admin.database()
+      .ref("test")
+      .set("hello");
 
     res.send("FIREBASE CONNECTED");
 
   } catch (e) {
 
-    res.send(e.toString());
+    res.send("FIREBASE ERROR : " + e);
 
   }
 
