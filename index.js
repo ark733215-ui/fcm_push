@@ -1,6 +1,15 @@
 const express = require("express");
+const admin = require("firebase-admin");
 
 const app = express();
+
+const serviceAccount =
+require("./serviceAccountKey.json");
+
+admin.initializeApp({
+    credential:
+    admin.credential.cert(serviceAccount)
+});
 
 app.get("/", (req, res) => {
 
@@ -8,16 +17,16 @@ app.get("/", (req, res) => {
 
 });
 
-app.get("/send/:id", (req, res) => {
+app.get("/send/:id", async (req, res) => {
 
-    const id = req.params.id;
+    try {
 
-    return res.send("ID = " + id);
+        return res.send("ROUTE OK");
 
+    } catch (e) {
+
+        return res.send(e.toString());
+    }
 });
 
-app.listen(process.env.PORT || 3000, () => {
-
-    console.log("SERVER STARTED");
-
-});
+app.listen(process.env.PORT || 3000);
