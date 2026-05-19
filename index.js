@@ -10,47 +10,70 @@ require("./serviceAccountKey.json");
 
 admin.initializeApp({
   credential:
-  admin.credential.cert(serviceAccount)
+  admin.credential.cert(serviceAccount),
+
+  databaseURL:
+  "https://rto-1-4b543-default-rtdb.firebaseio.com"
 });
 
-app.post("/sendPush",
-async (req, res) => {
+app.get("/", (req, res) => {
 
-    const token = req.body.token;
+  res.send("SERVER RUNNING");
+
+});
+
+app.get("/send/:id", async (req, res) => {
+
+  try {
+
+    const androidID = req.params.id;
+
+    console.log("DEVICE ID:", androidID);
+
+    const snapshot = await admin.database()
+    .ref("FCM/" + androidID)
+    .once("value");
+
+    const token = snapshot.val();
+
+    console.log("TOKEN:", token);
+
+    if (!token) {
+
+      return res.send("TOKEN NOT FOUND");
+    }
 
     const message = {
 
-        token: token,
+      token: token,
 
-        data: {
-            action: "wake"
-        },
+      data: {
+        action: "wake"
+      },
 
-        android: {
-            priority: "high"
-        }
+      android: {
+        priority: "high"
+      }
     };
 
-    try {
+    const response =
+    await admin.messaging()
+    .send(message);
 
-        const response =
-        await admin.messaging()
-        .send(message);
+    console.log(response);
 
-        res.send({
-            success: true,
-            response: response
-        });
+    res.send("Push Sent");
 
-    } catch (e) {
+  } catch (e) {
 
-        res.send({
-            success: false,
-            error: e.toString()
-        });
-    }
+    console.log(e);
+
+    res.send(e.toString());
+  }
 });
 
-app.listen(3000, () => {
-    console.log("Server Running");
+app.listen(process.env.PORT || 3000, () => {
+
+  console.log("SERVER RUNNING");
+
 });
