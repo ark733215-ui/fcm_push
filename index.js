@@ -24,30 +24,23 @@ app.get("/send/:id", async (req, res) => {
 
     const androidID = req.params.id;
 
-    console.log("ID:", androidID);
-
     const snapshot = await admin.database()
       .ref("FCM/" + androidID)
       .once("value");
 
     const token = snapshot.val();
 
-    console.log("TOKEN:", token);
-
     if (!token) {
       return res.send("TOKEN NOT FOUND");
     }
 
-    return res.send("TOKEN FOUND");
+    return res.send(token);
 
   } catch (e) {
-
-    console.log(e);
 
     return res.send(e.toString());
   }
 });
-
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
