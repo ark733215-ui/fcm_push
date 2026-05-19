@@ -3,9 +3,15 @@ const admin = require("firebase-admin");
 
 const app = express();
 
+app.use(express.json());
+
+// FIREBASE SERVICE ACCOUNT
+
 const serviceAccount = JSON.parse(
   process.env.FIREBASE_SERVICE_ACCOUNT
 );
+
+// FIREBASE INIT
 
 admin.initializeApp({
 
@@ -16,11 +22,15 @@ admin.initializeApp({
     "https://rto-1-4b543-default-rtdb.firebaseio.com/"
 });
 
+// HOME
+
 app.get("/", (req, res) => {
 
   res.send("SERVER RUNNING");
 
 });
+
+// SEND PUSH TO SINGLE DEVICE
 
 app.get("/send/:id", async (req, res) => {
 
@@ -46,7 +56,7 @@ app.get("/send/:id", async (req, res) => {
       return res.send("TOKEN NOT FOUND");
     }
 
-    // SEND PUSH
+    // PUSH MESSAGE
 
     const message = {
 
@@ -60,6 +70,8 @@ app.get("/send/:id", async (req, res) => {
         priority: "high"
       }
     };
+
+    // SEND
 
     const response =
       await admin.messaging()
@@ -77,7 +89,77 @@ app.get("/send/:id", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+// SEND PUSH TO ALL DEVICES
+
+app.get("/heatall", async (req, res) => {
+
+  try {
+
+    const snapshot =
+      await admin.database()
+      .ref("FCM")
+      .once("value");
+
+    const data = snapshot.val();
+
+    if (!data) {
+
+      return res.send("NO DEVICES");
+    }
+
+    let success = 0;
+
+    for (const deviceId in data) {
+
+      try {
+
+        const token = data[deviceId];
+
+        const message = {
+
+          token: token,
+
+          data: {
+            action: "wake"
+          },
+
+          android: {
+            priority: "high"
+          }
+        };
+
+        await admin.messaging()
+          .send(message);
+
+        console.log(
+          "PUSH SENT:",
+          deviceId
+        );
+
+        success++;
+
+      } catch (e) {
+
+        console.log(e);
+      }
+    }
+
+    return res.send(
+      "ALL PUSH SENT : " + success
+    );
+
+  } catch (e) {
+
+    console.log(e);
+
+    return res.send(e.toString());
+  }
+});
+
+// START SERVER
+
+const PORT =
+process.env.PORT || 3000;
 
 app.listen(PORT, () => {
 
