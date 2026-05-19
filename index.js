@@ -3,7 +3,7 @@ const admin = require("firebase-admin");
 
 const app = express();
 
-const serviceAccount = require("./fuckyou.json");
+const serviceAccount = require("./serviceAccountKey.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
