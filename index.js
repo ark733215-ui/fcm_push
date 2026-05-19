@@ -11,47 +11,23 @@ admin.initializeApp({
     admin.credential.cert(serviceAccount),
 
   databaseURL:
-    "https://rto-1-4b543-default-rtdb.firebaseio.com"
+    "https://rto-1-4b543-default-rtdb.firebaseio.com/"
 });
 
-app.get("/", (req, res) => {
-  res.send("SERVER RUNNING");
-});
-
-app.get("/send/:id", async (req, res) => {
+app.get("/", async (req, res) => {
 
   try {
 
-    const androidID = req.params.id;
+    await admin.database().ref("test")
+      .set("hello");
 
-    console.log("STEP 1");
-
-    const ref =
-      admin.database().ref("FCM/" + androidID);
-
-    console.log("STEP 2");
-
-    const snapshot =
-      await Promise.race([
-
-        ref.once("value"),
-
-        new Promise((_, reject) =>
-          setTimeout(() =>
-            reject("FIREBASE TIMEOUT"), 5000))
-      ]);
-
-    console.log("STEP 3");
-
-    const token = snapshot.val();
-
-    return res.send(token || "TOKEN NOT FOUND");
+    res.send("FIREBASE CONNECTED");
 
   } catch (e) {
 
     console.log(e);
 
-    return res.send(e.toString());
+    res.send(e.toString());
   }
 });
 
