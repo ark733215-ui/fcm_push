@@ -27,15 +27,29 @@ app.get("/send/:id", async (req, res) => {
 
         const androidID = req.params.id;
 
-        console.log("ANDROID ID:", androidID);
+        console.log("ID:", androidID);
 
-        res.send("ROUTE WORKING");
+        const snapshot =
+        await admin.database()
+        .ref("FCM/" + androidID)
+        .once("value");
+
+        const token = snapshot.val();
+
+        console.log("TOKEN:", token);
+
+        if (!token) {
+
+            return res.send("TOKEN NOT FOUND");
+        }
+
+        return res.send(token);
 
     } catch (e) {
 
         console.log(e);
 
-        res.send(e.toString());
+        return res.send(e.toString());
     }
 });
 
