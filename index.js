@@ -24,23 +24,37 @@ app.get("/send/:id", async (req, res) => {
 
     const androidID = req.params.id;
 
-    const snapshot = await admin.database()
-      .ref("FCM/" + androidID)
-      .once("value");
+    console.log("STEP 1");
+
+    const ref =
+      admin.database().ref("FCM/" + androidID);
+
+    console.log("STEP 2");
+
+    const snapshot =
+      await Promise.race([
+
+        ref.once("value"),
+
+        new Promise((_, reject) =>
+          setTimeout(() =>
+            reject("FIREBASE TIMEOUT"), 5000))
+      ]);
+
+    console.log("STEP 3");
 
     const token = snapshot.val();
 
-    if (!token) {
-      return res.send("TOKEN NOT FOUND");
-    }
-
-    return res.send(token);
+    return res.send(token || "TOKEN NOT FOUND");
 
   } catch (e) {
+
+    console.log(e);
 
     return res.send(e.toString());
   }
 });
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
